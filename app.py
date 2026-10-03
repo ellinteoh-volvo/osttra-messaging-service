@@ -51,13 +51,7 @@ def create_message():
 
         connection.commit()
 
-        message = {
-            "id": row["id"],
-            "recipient": row["recipient"],
-            "text": row["text"],
-            "unread": bool(row["unread"]),
-            "created_at": row["created_at"]
-        }
+        message = message_to_dict(row)
 
         return jsonify(message), 201
 
@@ -118,16 +112,7 @@ def get_messages():
             sql, parameters
         ).fetchall()
 
-        result = [
-            {
-                "id": row["id"],
-                "recipient": row["recipient"],
-                "text": row["text"],
-                "unread": bool(row["unread"]),
-                "created_at": row["created_at"]
-            }
-            for row in rows
-        ]
+        result = [message_to_dict(row) for row in rows]
 
         return jsonify(result), 200
 
@@ -165,16 +150,7 @@ def fetch_unread_messages():
             key=lambda row: (row["created_at"], row["id"])
         )
 
-        result = [
-            {
-                "id": row["id"],
-                "recipient": row["recipient"],
-                "text": row["text"],
-                "unread": bool(row["unread"]),
-                "created_at": row["created_at"]
-            }
-            for row in rows
-        ]
+        result = [message_to_dict(row) for row in rows]
 
         return jsonify(result), 200
 

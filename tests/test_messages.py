@@ -53,6 +53,26 @@ def test_create_and_retrieve_message(client):
     assert messages[0]["id"] == message["id"]
     assert messages[0]["text"] == "My automated test message"
 
+def test_messages_are_isolated_by_recipient(client):
+    client.post(
+        "/messages",
+        json={"recipient": "alice", "text": "Message for Alice"}
+    )
+
+    client.post(
+        "/messages",
+        json={"recipient": "bob", "text": "Message for Bob"}
+    )
+
+    response = client.get("/messages?recipient=alice")
+
+    assert response.status_code == 200
+
+    messages = response.get_json()
+
+    assert len(messages) == 1
+    assert messages[0]["recipient"] == "alice"
+    assert messages[0]["text"] == "Message for Alice"
 
 
 def test_fetch_unread_messages_marks_them_as_read(client):
@@ -331,6 +351,23 @@ def test_invalid_pagination_parameters(client):
     assert invalid_range.get_json() == {
         "error": "stop must be greater than or equal to start"
     }
+
+
+def test_pagination_start_beyond_available_messages_returns_empty_list(client):
+    client.post(
+        "/messages",
+        json={"recipient": "alice", "text": "First"}
+    )
+
+    client.post(
+        "/messages",
+        json={"recipient": "alice", "text": "Second"}
+    )
+
+    response = client.get("/messages?recipient=alice&start=10")
+
+    assert response.status_code == 200
+    assert response.get_json() == []
 
 
 

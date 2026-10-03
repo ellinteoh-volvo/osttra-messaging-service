@@ -163,8 +163,14 @@ curl -X DELETE http://127.0.0.1:5000/messages \
 
 A successful batch deletion returns:
 
+```json
+{
+  "deleted_count": 3
+}
+```
+
 ```text
-HTTP 204 No Content
+HTTP 200 OK
 ```
 
 Batch deletion is all-or-nothing. If any requested message does not exist, no messages are deleted and the API returns:
