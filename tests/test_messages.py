@@ -19,6 +19,8 @@ def client(tmp_path, monkeypatch):
     # Return a Flask test client
     return app_module.app.test_client()
 
+
+
 def test_create_and_retrieve_message(client):
     # Create a message
     response = client.post(
@@ -53,6 +55,8 @@ def test_create_and_retrieve_message(client):
     assert messages[0]["id"] == message["id"]
     assert messages[0]["text"] == "My automated test message"
 
+
+
 def test_messages_are_isolated_by_recipient(client):
     client.post(
         "/messages",
@@ -73,6 +77,7 @@ def test_messages_are_isolated_by_recipient(client):
     assert len(messages) == 1
     assert messages[0]["recipient"] == "alice"
     assert messages[0]["text"] == "Message for Alice"
+
 
 
 def test_fetch_unread_messages_marks_them_as_read(client):
@@ -120,6 +125,27 @@ def test_fetch_unread_messages_marks_them_as_read(client):
     assert len(all_messages) == 1
     assert all_messages[0]["text"] == "Unread message"
     assert all_messages[0]["unread"] is False
+
+
+
+def test_recipient_is_normalized_when_message_is_created(client):
+    create_response = client.post(
+        "/messages",
+        json={"recipient": " alice ", "text": "Hello"}
+    )
+
+    assert create_response.status_code == 201
+    assert create_response.get_json()["recipient"] == "alice"
+
+    get_response = client.get("/messages?recipient=alice")
+
+    assert get_response.status_code == 200
+
+    messages = get_response.get_json()
+
+    assert len(messages) == 1
+    assert messages[0]["recipient"] == "alice"
+    assert messages[0]["text"] == "Hello"
 
 
 
@@ -282,6 +308,19 @@ def test_messages_are_ordered_and_paginated(client):
     assert messages[1]["text"] == "Third message"
 
 
+
+def test_pagination_rejects_value_outside_sqlite_integer_range(client):
+    response = client.get(
+        "/messages?recipient=alice&start=9223372036854775808"
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "start and stop are too large"
+    }
+
+    
+
 def test_start_only_pagination(client):
     for text in ["First", "Second", "Third"]:
         client.post(
@@ -303,6 +342,7 @@ def test_start_only_pagination(client):
     ]
 
 
+
 def test_stop_only_pagination(client):
     for text in ["First", "Second", "Third"]:
         client.post(
@@ -322,6 +362,7 @@ def test_stop_only_pagination(client):
         "First",
         "Second"
     ]
+
 
 
 def test_invalid_pagination_parameters(client):
@@ -351,6 +392,7 @@ def test_invalid_pagination_parameters(client):
     assert invalid_range.get_json() == {
         "error": "stop must be greater than or equal to start"
     }
+
 
 
 def test_pagination_start_beyond_available_messages_returns_empty_list(client):
@@ -385,6 +427,7 @@ def test_create_message_requires_recipient(client):
     }
 
 
+
 def test_create_message_requires_text(client):
     response = client.post(
         "/messages",
@@ -397,6 +440,7 @@ def test_create_message_requires_text(client):
     assert response.get_json() == {
         "error": "Message text is required"
     }
+
 
 
 def test_create_message_requires_json_object(client):
@@ -412,6 +456,7 @@ def test_create_message_requires_json_object(client):
     }
 
 
+
 def test_get_messages_requires_recipient(client):
     response = client.get("/messages")
 
@@ -419,6 +464,7 @@ def test_get_messages_requires_recipient(client):
     assert response.get_json() == {
         "error": "A recipient is required"
     }
+
 
 
 def test_batch_delete_rejects_empty_ids(client):
@@ -435,6 +481,7 @@ def test_batch_delete_rejects_empty_ids(client):
     }
 
 
+
 def test_batch_delete_rejects_invalid_ids(client):
     response = client.delete(
         "/messages",
@@ -447,6 +494,7 @@ def test_batch_delete_rejects_invalid_ids(client):
     assert response.get_json() == {
         "error": "IDs must be positive integers"
     }
+
 
 
 def test_batch_delete_rejects_duplicate_ids(client):

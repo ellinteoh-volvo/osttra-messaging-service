@@ -32,6 +32,8 @@ def create_message():
     if not isinstance(recipient, str) or not recipient.strip():
         return jsonify({"error": "A recipient is required"}), 400
 
+    recipient = recipient.strip()
+
     if not isinstance(text, str) or not text.strip():
         return jsonify({"error": "Message text is required"}), 400
 
@@ -79,8 +81,20 @@ def get_messages():
                     "error": f"{name} must be a non-negative integer"
                 }), 400
 
-    start = int(raw_start) if raw_start is not None else 0
-    stop = int(raw_stop) if raw_stop is not None else None
+    try:
+        start = int(raw_start) if raw_start is not None else 0
+        stop = int(raw_stop) if raw_stop is not None else None
+    except ValueError:
+        return jsonify({
+            "error": "start and stop must be non-negative integers"
+        }), 400
+
+    sqlite_max_integer = 2**63 - 1
+
+    if start > sqlite_max_integer or (stop is not None and stop > sqlite_max_integer):
+        return jsonify({
+            "error": "start and stop are too large"
+        }), 400
 
     if stop is not None and stop < start:
         return jsonify({

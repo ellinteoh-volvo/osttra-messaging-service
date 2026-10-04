@@ -4,6 +4,12 @@ A lightweight REST API for submitting, retrieving, and deleting plain-text messa
 
 The service is implemented in Python using Flask and SQLite. SQLite was chosen to keep the solution self-contained and easy to run locally without requiring external infrastructure.
 
+## Runtime Requirements
+
+- Python 3.9 or newer
+- SQLite 3.35.0 or newer, because the API uses SQLite `RETURNING`
+- Tested with Python 3.13
+
 ## Assumptions
 
 - A recipient is identified by a non-empty string.
@@ -169,6 +175,8 @@ A successful batch deletion returns:
 }
 ```
 
+with HTTP status:
+
 ```text
 HTTP 200 OK
 ```
@@ -177,7 +185,7 @@ Batch deletion is all-or-nothing. If any requested message does not exist, no me
 
 ```json
 {
-  "error": "One or more messages were not found"
+  "error": "One or more messages not found"
 }
 ```
 
@@ -224,9 +232,10 @@ This implementation is intentionally lightweight and optimized for local executi
 For a production environment, I would consider:
 
 - Replacing SQLite with a production database such as PostgreSQL to support higher concurrency, replication, backups, and failover.
-- Running multiple stateless API instances behind a load balancer for redundancy and horizontal scaling.
+- After replacing the local SQLite database with a shared production database, run multiple stateless API instances behind a load balancer for redundancy and horizontal scaling.
 - Adding idempotency support to `POST /messages` to prevent duplicate messages when clients retry after timeouts or network failures.
 - Using managed database backups and tested recovery procedures based on defined RTO and RPO requirements.
 - Extending health checks with readiness checks for critical dependencies such as the database.
 - Using cursor-based pagination for very large datasets, while keeping index-based pagination here because the assignment explicitly requires `start` and `stop` indexes.
 - Adding authentication, authorization, observability, and rate limiting if the service were exposed in a real production environment.
+- The batch-delete endpoint sends message IDs in the body of a `DELETE` request. This works with the documented `curl` usage, although some HTTP clients and intermediaries may handle DELETE request bodies inconsistently. For broader compatibility, an alternative design could use a `POST /messages/batch-delete` action endpoint.
