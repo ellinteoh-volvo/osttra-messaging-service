@@ -4,6 +4,20 @@ A lightweight REST API for submitting, retrieving, and deleting plain-text messa
 
 The service is implemented in Python using Flask and SQLite. SQLite was chosen to keep the solution self-contained and easy to run locally without requiring external infrastructure.
 
+## Requirements Coverage
+
+| Requirement | Implementation |
+|---|---|
+| Submit a plain-text message to a recipient | `POST /messages` |
+| Fetch unread messages | `POST /messages/unread/fetch` |
+| Delete a single message | `DELETE /messages/<id>` |
+| Delete multiple messages | `DELETE /messages` |
+| Retrieve messages including previously fetched messages | `GET /messages` |
+| Order messages by time | Messages are returned oldest first |
+| Support start/stop indexes | `GET /messages?recipient=alice&start=1&stop=3` |
+| REST API only | Implemented with Flask |
+| No authentication/authorization required | Intentionally omitted |
+
 ## Runtime Requirements
 
 - Python 3.9 or newer
@@ -239,3 +253,9 @@ For a production environment, I would consider:
 - Using cursor-based pagination for very large datasets, while keeping index-based pagination here because the assignment explicitly requires `start` and `stop` indexes.
 - Adding authentication, authorization, observability, and rate limiting if the service were exposed in a real production environment.
 - The batch-delete endpoint sends message IDs in the body of a `DELETE` request. This works with the documented `curl` usage, although some HTTP clients and intermediaries may handle DELETE request bodies inconsistently. For broader compatibility, an alternative design could use a `POST /messages/batch-delete` action endpoint.
+- In production, add centralized structured logging, service metrics, and alerting. Key signals would include request rate, response latency, HTTP 4xx/5xx rates, database errors, and health/readiness failures. Request IDs should be used for correlation, and message contents should not be logged.
+- Synthetic API monitoring could be added using tools such as Postman Monitors to periodically verify key endpoints and response times, alongside application logs and service metrics for deeper diagnosis.
+- Authentication and authorization are intentionally omitted because they are outside the assignment scope. In production, access should be authenticated and authorized per recipient or user.
+- Production deployment should use HTTPS, rate limiting, request-size limits, secure configuration management, and least-privilege database access.
+- Message contents should not be written to application logs or other monitoring systems.
+- For production, I’d define SLIs around availability, latency, correctness, and durability. For example, we could measure the percentage of valid requests succeeding and p95 latency for the critical message flows, then agree SLO targets with stakeholders based on business criticality.
