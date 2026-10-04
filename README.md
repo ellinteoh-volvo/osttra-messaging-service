@@ -230,14 +230,27 @@ python -m pytest -v
 The tests cover:
 
 - Message creation and retrieval
+- Recipient isolation and normalization
 - Unread-message fetching and read-state updates
 - Single-message deletion
-- Atomic batch deletion
+- Atomic batch deletion and rollback behavior
 - Pagination using `start` and `stop`
+- Pagination boundary and range validation
 - Input validation and error handling
+- Batch-delete input validation
 - Health endpoint behavior
 
 Each test uses its own temporary SQLite database, so tests do not affect the local application database or each other.
+
+## Test Coverage
+
+The automated tests cover the main API behavior, including message creation and retrieval, unread-state transitions, recipient isolation, deletion, atomic batch deletion, pagination, validation, and error handling.
+
+Coverage can be measured with:
+
+```bash
+python -m pytest --cov=app --cov=db --cov-report=term-missing
+```
 
 ## Production Considerations
 
