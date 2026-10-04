@@ -227,6 +227,8 @@ Run the automated test suite with:
 python -m pytest -v
 ```
 
+Pytest automatically discovers files named `test_*.py` under the `tests/` directory, so individual test scripts do not need to be run manually.
+
 The tests cover:
 
 - Message creation and retrieval
